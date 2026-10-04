@@ -1,5 +1,5 @@
-sku,producto,categoria,existencia,stock_minimo,precio_unitario,actualizado
-REF-2001,Bujía,MOTOR,8,4,145.00,2026-10-01
-REF-2001,Balatas,Frenos,-2,5,820.50,2026-10-02
-,Amortiguador,Suspensión,4,6,sin precio,fecha
-REF-2004,,Eléctrico,3,5,1850.00,2026-10-03
+sku,producto,categoria,existencia,stock_minimo,precio_unitario,actualizado,proveedor
+REF-2001,Bujía,MOTOR,8,4,145.00,2026-10-01,Autopartes Centro
+REF-2001,Balatas,Frenos,-2,5,820.50,2026-10-02,
+,Amortiguador,Suspensión,4,6,sin precio,fecha,
+REF-2004,,Eléctrico,3,5,1850.00,2026-10-03,

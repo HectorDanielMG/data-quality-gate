@@ -181,6 +181,19 @@ def analyze(csv_path: Path, contract_path: Path) -> Result:
         missing_lines = [i + 2 for i, value in enumerate(values) if _blank(value)]
         if rules.get("required") and missing_lines:
             add("REQUIRED", "error", "Campo obligatorio vacío", f"La columna '{name}' debe tener valor en todas las filas.", len(missing_lines), name, missing_lines)
+        if "max_missing_percent" in rules:
+            try:
+                max_missing = float(rules["max_missing_percent"])
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"'max_missing_percent' de '{name}' debe ser un número entre 0 y 100.") from exc
+            if not 0 <= max_missing <= 100:
+                raise ValueError(f"'max_missing_percent' de '{name}' debe estar entre 0 y 100.")
+            severity = str(rules.get("missing_severity", "error")).lower()
+            if severity not in {"error", "warning"}:
+                raise ValueError(f"'missing_severity' de '{name}' debe ser 'error' o 'warning'.")
+            actual_missing = 100 * len(missing_lines) / len(values) if values else 0
+            if actual_missing > max_missing:
+                add("MISSING_RATE", severity, "Umbral de datos vacíos excedido", f"'{name}' tiene {actual_missing:.1f}% de valores vacíos; el máximo es {max_missing:.1f}%.", len(missing_lines), name, missing_lines)
         expected_type = rules.get("type")
         if expected_type:
             invalid = [line for line, value in filled if not _type_ok(value, str(expected_type))]

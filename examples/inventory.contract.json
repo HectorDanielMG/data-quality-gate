@@ -10,6 +10,7 @@
     "existencia": {"type": "integer", "required": true, "min": 0},
     "stock_minimo": {"type": "integer", "required": true, "min": 0},
     "precio_unitario": {"type": "number", "required": true, "min": 0},
-    "actualizado": {"type": "date", "required": true}
+    "actualizado": {"type": "date", "required": true},
+    "proveedor": {"type": "string", "max_missing_percent": 25, "missing_severity": "warning"}
   }
 }

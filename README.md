@@ -8,6 +8,7 @@ Proyecto de portafolio sobre ingeniería de datos y automatización, aplicado a 
 
 - Contratos de datos versionables en JSON.
 - Validación de esquema, tipos, campos obligatorios, unicidad, catálogos, expresiones regulares y rangos.
+- Umbrales de valores vacíos configurables por columna, con severidad bloqueante o informativa.
 - Perfilado de completitud, valores distintos, muestras y rangos numéricos.
 - Detección de filas repetidas y registros con estructura inválida.
 - Puntuación de calidad, severidad por hallazgo y códigos de salida para CI/CD.
@@ -69,9 +70,11 @@ Agrega `--fail-on-warning` para bloquear también ante advertencias. El JSON inc
 | `allowed_values` | `["Motor", "Frenos"]` | Limita el campo a un catálogo |
 | `regex` | `"^[A-Z]{3}-[0-9]{4}$"` | Valida el formato completo |
 | `min` / `max` | `0` | Define límites numéricos |
+| `max_missing_percent` | `25` | Tolera un porcentaje máximo de celdas vacías |
+| `missing_severity` | `"warning"` | Define si exceder el umbral bloquea o solo advierte |
 | `min_length` | `3` | Establece una longitud mínima de texto |
 
-`minimum_rows` y `maximum_rows` controlan el tamaño del lote; `primary_key` documenta la llave de negocio. Las columnas extra generan advertencias y las columnas requeridas faltantes bloquean la validación.
+`minimum_rows` y `maximum_rows` controlan el tamaño del lote; `primary_key` documenta la llave de negocio. Las columnas extra generan advertencias y las columnas requeridas faltantes bloquean la validación. Para una columna opcional, `max_missing_percent` acepta un porcentaje de 0 a 100; `missing_severity` puede ser `error` o `warning` (por defecto, `error`).
 
 ## Arquitectura
 
