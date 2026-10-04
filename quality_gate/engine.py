@@ -138,6 +138,21 @@ def _read_contract(path: Path) -> dict[str, Any]:
                 re.compile(str(rules["regex"]))
             except re.error as exc:
                 raise ValueError(f"Expresión regular inválida en '{name}': {exc}") from exc
+    comparisons = data.get("comparisons", [])
+    if not isinstance(comparisons, list):
+        raise ValueError("'comparisons' debe ser una lista de reglas.")
+    operators = {"==", "!=", "<", "<=", ">", ">="}
+    for index, rule in enumerate(comparisons, start=1):
+        if not isinstance(rule, dict):
+            raise ValueError(f"La regla de comparación {index} debe ser un objeto JSON.")
+        left, right, operator = rule.get("left"), rule.get("right"), rule.get("operator")
+        if left not in data["columns"] or right not in data["columns"]:
+            raise ValueError(f"Las columnas de la regla de comparación {index} deben declararse en 'columns'.")
+        if operator not in operators:
+            raise ValueError(f"El operador de la regla de comparación {index} debe ser uno de: " + ", ".join(sorted(operators)) + ".")
+        severity = str(rule.get("severity", "error")).lower()
+        if severity not in {"error", "warning"}:
+            raise ValueError(f"La severidad de la regla de comparación {index} debe ser 'error' o 'warning'.")
     return data
 
 
@@ -244,6 +259,38 @@ def analyze(csv_path: Path, contract_path: Path, delimiter: str | None = None) -
                 invalid = [line for line, value in filled if (number := _number(value)) is not None and comparator(number, bound)]
                 if invalid:
                     add("OUT_OF_RANGE", "error", "Valor fuera de rango", f"La columna '{name}' contiene valores {label} ({rules[bound_name]}).", len(invalid), name, invalid)
+
+    comparison_functions = {
+        "==": lambda left, right: left == right,
+        "!=": lambda left, right: left != right,
+        "<": lambda left, right: left < right,
+        "<=": lambda left, right: left <= right,
+        ">": lambda left, right: left > right,
+        ">=": lambda left, right: left >= right,
+    }
+    for rule in contract.get("comparisons", []):
+        left_name, right_name = rule["left"], rule["right"]
+        if left_name not in headers or right_name not in headers:
+            continue
+        operator = rule["operator"]
+        failed_lines: list[int] = []
+        for index, row in enumerate(rows, start=2):
+            left_value, right_value = row.get(left_name), row.get(right_name)
+            if _blank(left_value) or _blank(right_value):
+                continue
+            left_text, right_text = str(left_value).strip(), str(right_value).strip()
+            if operator in {"<", "<=", ">", ">="}:
+                left_number, right_number = _number(left_text), _number(right_text)
+                if left_number is None or right_number is None:
+                    continue
+                left_value, right_value = left_number, right_number
+            else:
+                left_value, right_value = left_text, right_text
+            if not comparison_functions[operator](left_value, right_value):
+                failed_lines.append(index)
+        if failed_lines:
+            message = str(rule.get("message", f"Se esperaba que '{left_name}' {operator} '{right_name}'."))
+            add("CROSS_FIELD", str(rule.get("severity", "error")).lower(), "Regla entre columnas incumplida", message, len(failed_lines), lines=failed_lines)
 
     minimum = int(contract.get("minimum_rows", 0))
     maximum = contract.get("maximum_rows")

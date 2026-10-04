@@ -12,5 +12,14 @@
     "precio_unitario": {"type": "number", "required": true, "min": 0},
     "actualizado": {"type": "date", "required": true},
     "proveedor": {"type": "string", "max_missing_percent": 25, "missing_severity": "warning"}
-  }
+  },
+  "comparisons": [
+    {
+      "left": "existencia",
+      "operator": ">=",
+      "right": "stock_minimo",
+      "severity": "warning",
+      "message": "La existencia está por debajo del stock mínimo."
+    }
+  ]
 }
