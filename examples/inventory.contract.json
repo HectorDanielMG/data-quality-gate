@@ -1,0 +1,15 @@
+{
+  "name": "Inventario de refacciones",
+  "version": 1,
+  "minimum_rows": 5,
+  "primary_key": "sku",
+  "columns": {
+    "sku": {"type": "string", "required": true, "unique": true, "regex": "^[A-Z]{3}-[0-9]{4}$"},
+    "producto": {"type": "string", "required": true, "min_length": 3},
+    "categoria": {"type": "string", "required": true, "allowed_values": ["Motor", "Frenos", "Suspensión", "Eléctrico"]},
+    "existencia": {"type": "integer", "required": true, "min": 0},
+    "stock_minimo": {"type": "integer", "required": true, "min": 0},
+    "precio_unitario": {"type": "number", "required": true, "min": 0},
+    "actualizado": {"type": "date", "required": true}
+  }
+}

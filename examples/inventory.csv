@@ -1,0 +1,9 @@
+sku,producto,categoria,existencia,stock_minimo,precio_unitario,actualizado
+REF-1001,Balatas delanteras,Frenos,24,8,820.50,2026-10-01
+REF-1002,Banda de distribución,Motor,11,5,1190.00,2026-10-02
+REF-1003,Amortiguador delantero,Suspensión,7,6,2380.00,2026-10-02
+REF-1004,Alternador 12V,Eléctrico,4,5,3250.00,2026-10-03
+REF-1005,Bomba de agua,Motor,15,7,940.00,2026-10-03
+REF-1006,Disco de freno,Frenos,19,8,1560.00,2026-10-04
+REF-1007,Terminal de dirección,Suspensión,9,5,675.00,2026-10-04
+REF-1008,Batería 12V,Eléctrico,6,6,2180.00,2026-10-05

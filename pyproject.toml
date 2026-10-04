@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data-quality-gate"
+version = "1.0.0"
+description = "Valida contratos y calidad de datos CSV con informes HTML"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Hector Daniel Marmolejo Garcia" }]
+keywords = ["data-quality", "data-engineering", "csv", "data-contracts"]
+classifiers = ["Development Status :: 4 - Beta", "Environment :: Console", "License :: OSI Approved :: MIT License", "Programming Language :: Python :: 3", "Programming Language :: Python :: 3.10"]
+dependencies = []
+
+[project.scripts]
+qualitygate = "quality_gate.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["quality_gate*"]
