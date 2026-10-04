@@ -41,6 +41,7 @@ class ColumnProfile:
 class Result:
     source: str
     contract: str
+    delimiter: str
     generated_at: str
     row_count: int
     column_count: int
@@ -140,11 +141,31 @@ def _read_contract(path: Path) -> dict[str, Any]:
     return data
 
 
-def analyze(csv_path: Path, contract_path: Path) -> Result:
-    contract = _read_contract(contract_path)
+def _detect_delimiter(csv_path: Path, override: str | None) -> str:
+    supported = {",", ";", "\t", "|"}
+    if override is not None:
+        if override not in supported:
+            raise ValueError("El separador debe ser coma, punto y coma, tabulador o barra vertical.")
+        return override
     try:
         with csv_path.open(encoding="utf-8-sig", newline="") as stream:
-            reader = csv.DictReader(stream)
+            sample = stream.read(8192)
+    except UnicodeDecodeError as exc:
+        raise ValueError("El archivo CSV debe usar codificación UTF-8.") from exc
+    if not sample.strip():
+        return ","
+    try:
+        return csv.Sniffer().sniff(sample, delimiters=",;\t|").delimiter
+    except csv.Error:
+        return ","
+
+
+def analyze(csv_path: Path, contract_path: Path, delimiter: str | None = None) -> Result:
+    contract = _read_contract(contract_path)
+    separator = _detect_delimiter(csv_path, delimiter)
+    try:
+        with csv_path.open(encoding="utf-8-sig", newline="") as stream:
+            reader = csv.DictReader(stream, delimiter=separator)
             headers = reader.fieldnames
             if not headers:
                 raise ValueError("El CSV está vacío o no tiene encabezados.")
@@ -244,4 +265,4 @@ def analyze(csv_path: Path, contract_path: Path) -> Result:
     denominator = max(1, len(rows) * max(1, len(headers)))
     penalty = sum(item.affected_rows * (1 if item.severity == "error" else .25) for item in findings)
     score = round(max(0, 100 - 100 * penalty / denominator), 1)
-    return Result(csv_path.name, str(contract.get("name", contract_path.stem)), datetime.now(timezone.utc).isoformat(timespec="seconds"), len(rows), len(headers), score, not any(item.severity == "error" for item in findings), profiles, findings)
+    return Result(csv_path.name, str(contract.get("name", contract_path.stem)), separator, datetime.now(timezone.utc).isoformat(timespec="seconds"), len(rows), len(headers), score, not any(item.severity == "error" for item in findings), profiles, findings)

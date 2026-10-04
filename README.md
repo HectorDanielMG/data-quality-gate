@@ -13,6 +13,7 @@ Proyecto de portafolio sobre ingeniería de datos y automatización, aplicado a 
 - Detección de filas repetidas y registros con estructura inválida.
 - Puntuación de calidad, severidad por hallazgo y códigos de salida para CI/CD.
 - Informes HTML para personas y JSON para automatizaciones.
+- Autodetección de comas, punto y coma, tabuladores y barras verticales en CSV.
 - Motor implementado con la biblioteca estándar de Python.
 
 ## Inicio rápido
@@ -25,6 +26,17 @@ python3 -m quality_gate validate examples/inventory.csv \
 ```
 
 Abre `reports/inventory.html` en el navegador. Es un reporte de un solo archivo que no depende de servicios externos.
+
+El separador se detecta automáticamente. Para probar una exportación de Excel con punto y coma:
+
+```bash
+python3 -m quality_gate validate examples/inventory_excel.csv \
+  --contract examples/inventory.contract.json \
+  --delimiter semicolon \
+  --html reports/inventory-excel.html
+```
+
+`--delimiter` también acepta `auto`, `comma`, `tab` y `pipe`.
 
 Para ver cómo la puerta detecta errores intencionales: 
 
@@ -82,7 +94,7 @@ Agrega `--fail-on-warning` para bloquear también ante advertencias. El JSON inc
 CSV + contrato JSON → perfilado → reglas → puntuación → HTML + JSON
 ```
 
-La lectura acepta UTF-8 y UTF-8 con BOM. Las fechas se esperan en formato ISO 8601. El cálculo de calidad penaliza hallazgos de acuerdo con las filas afectadas y su severidad. El lote se procesa en memoria, por lo que está pensado para exportaciones pequeñas y medianas.
+La lectura acepta UTF-8 y UTF-8 con BOM, y detecta separadores coma, punto y coma, tabulador y barra vertical. También puedes fijarlo con `--delimiter`. Las fechas se esperan en formato ISO 8601. El cálculo de calidad penaliza hallazgos de acuerdo con las filas afectadas y su severidad. El lote se procesa en memoria, por lo que está pensado para exportaciones pequeñas y medianas.
 
 ## Estructura
 

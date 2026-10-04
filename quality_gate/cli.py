@@ -14,6 +14,7 @@ def main(argv: list[str] | None = None) -> int:
     check = commands.add_parser("validate", help="valida y perfila un archivo CSV")
     check.add_argument("file", type=Path, help="archivo CSV")
     check.add_argument("--contract", required=True, type=Path, help="contrato JSON")
+    check.add_argument("--delimiter", choices=("auto", "comma", "semicolon", "tab", "pipe"), default="auto", help="separador CSV; auto se detecta por defecto")
     check.add_argument("--html", type=Path, help="guarda un informe HTML")
     check.add_argument("--json", type=Path, help="guarda resultados legibles por máquina")
     check.add_argument("--fail-on-warning", action="store_true", help="también devuelve error ante advertencias")
@@ -25,8 +26,9 @@ def main(argv: list[str] | None = None) -> int:
     outputs = [p.resolve() for p in (args.html, args.json) if p]
     if len(set(outputs)) != len(outputs) or any(p in {args.file.resolve(), args.contract.resolve()} for p in outputs):
         print("Error: cada archivo de salida debe usar una ruta distinta a las entradas.", file=sys.stderr); return 2
+    delimiters = {"auto": None, "comma": ",", "semicolon": ";", "tab": "\t", "pipe": "|"}
     try:
-        result = analyze(args.file, args.contract)
+        result = analyze(args.file, args.contract, delimiters[args.delimiter])
         if args.json:
             args.json.parent.mkdir(parents=True, exist_ok=True)
             args.json.write_text(json.dumps(result.to_dict(), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -37,7 +39,9 @@ def main(argv: list[str] | None = None) -> int:
     warnings = sum(f.severity == "warning" for f in result.findings)
     print(f"Data Quality Gate · {result.source}")
     print(f"Estado: {'APROBADO' if result.passed else 'BLOQUEADO'} · Calidad: {result.score:.1f}/100")
-    print(f"Filas: {result.row_count} · Columnas: {result.column_count} · Errores: {errors} · Advertencias: {warnings}")
+    labels = {",": "coma", ";": "punto y coma", "\t": "tabulador", "|": "barra vertical"}
+    print(f"Filas: {result.row_count} · Columnas: {result.column_count} · Separador: {labels[result.delimiter]}")
+    print(f"Errores: {errors} · Advertencias: {warnings}")
     for finding in result.findings[:8]:
         column = f" [{finding.column}]" if finding.column else ""
         print(f"  {finding.severity.upper()}{column}: {finding.title} — {finding.message}")
