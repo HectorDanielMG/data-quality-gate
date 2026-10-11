@@ -88,7 +88,7 @@ Agrega `--fail-on-warning` para bloquear también ante advertencias. El JSON inc
 | `min_length` / `max_length` | `3` / `80` | Define un rango de longitud para texto |
 | `comparisons` | `existencia >= stock_minimo` | Compara dos columnas por fila con `==`, `!=`, `<`, `<=`, `>` o `>=` |
 
-`minimum_rows` y `maximum_rows` controlan el tamaño del lote; `primary_key` documenta la llave de negocio. Las columnas extra generan advertencias y las columnas requeridas faltantes bloquean la validación. Para una columna opcional, `max_missing_percent` acepta un porcentaje de 0 a 100; `missing_severity` puede ser `error` o `warning` (por defecto, `error`).
+`minimum_rows` y `maximum_rows` controlan el tamaño del lote; `primary_key` documenta la llave de negocio. Las columnas extra generan advertencias y las columnas requeridas faltantes bloquean la validación. `allowed_values` debe declararse como una lista JSON. Para una columna opcional, `max_missing_percent` acepta un porcentaje de 0 a 100; `missing_severity` puede ser `error` o `warning` (por defecto, `error`).
 
 Las reglas `comparisons` se declaran en el nivel superior del contrato. Las comparaciones de orden (`<`, `<=`, `>`, `>=`) requieren valores numéricos; `==` y `!=` comparan el texto de las celdas. Las filas con alguno de los dos valores vacío se omiten porque los campos obligatorios se revisan por separado. Cada regla acepta `severity` (`error` por defecto) y un `message` opcional:
 

@@ -138,6 +138,8 @@ def _read_contract(path: Path) -> dict[str, Any]:
                 re.compile(str(rules["regex"]))
             except re.error as exc:
                 raise ValueError(f"Expresión regular inválida en '{name}': {exc}") from exc
+        if "allowed_values" in rules and not isinstance(rules["allowed_values"], list):
+            raise ValueError(f"'allowed_values' de '{name}' debe ser una lista JSON.")
         for length_rule in ("min_length", "max_length"):
             if length_rule in rules:
                 length = rules[length_rule]
