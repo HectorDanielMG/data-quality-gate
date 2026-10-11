@@ -138,6 +138,10 @@ def _read_contract(path: Path) -> dict[str, Any]:
                 re.compile(str(rules["regex"]))
             except re.error as exc:
                 raise ValueError(f"Expresión regular inválida en '{name}': {exc}") from exc
+        if "min_length" in rules:
+            minimum_length = rules["min_length"]
+            if isinstance(minimum_length, bool) or not isinstance(minimum_length, int) or minimum_length < 0:
+                raise ValueError(f"'min_length' de '{name}' debe ser un número entero mayor o igual a cero.")
     comparisons = data.get("comparisons", [])
     if not isinstance(comparisons, list):
         raise ValueError("'comparisons' debe ser una lista de reglas.")
@@ -252,6 +256,11 @@ def analyze(csv_path: Path, contract_path: Path, delimiter: str | None = None) -
             invalid = [line for line, value in filled if pattern.fullmatch(value) is None]
             if invalid:
                 add("PATTERN_MISMATCH", "error", "Formato no válido", f"La columna '{name}' no cumple el patrón requerido.", len(invalid), name, invalid)
+        if "min_length" in rules:
+            minimum_length = rules["min_length"]
+            invalid = [line for line, value in filled if len(value) < minimum_length]
+            if invalid:
+                add("MIN_LENGTH", "error", "Texto demasiado corto", f"La columna '{name}' debe tener al menos {minimum_length} caracteres.", len(invalid), name, invalid)
         for bound_name, comparator, label in (("min", lambda x, y: x < y, "menor al mínimo"), ("max", lambda x, y: x > y, "mayor al máximo")):
             if bound_name in rules:
                 bound = _number(str(rules[bound_name]))
