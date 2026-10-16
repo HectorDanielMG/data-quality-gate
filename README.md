@@ -86,6 +86,7 @@ Agrega `--fail-on-warning` para bloquear también ante advertencias. El JSON inc
 | `max_missing_percent` | `25` | Tolera un porcentaje máximo de celdas vacías |
 | `missing_severity` | `"warning"` | Define si exceder el umbral bloquea o solo advierte |
 | `min_length` / `max_length` | `3` / `80` | Define un rango de longitud para texto |
+| `min_distinct` / `max_distinct` | `2` / `50` | Controla la cantidad de valores diferentes esperados |
 | `comparisons` | `existencia >= stock_minimo` | Compara dos columnas por fila con `==`, `!=`, `<`, `<=`, `>` o `>=` |
 
 `minimum_rows` y `maximum_rows` controlan el tamaño del lote; `primary_key` documenta la llave de negocio. Las columnas extra generan advertencias y las columnas requeridas faltantes bloquean la validación. `allowed_values` debe declararse como una lista JSON. Para una columna opcional, `max_missing_percent` acepta un porcentaje de 0 a 100; `missing_severity` puede ser `error` o `warning` (por defecto, `error`).
@@ -103,6 +104,20 @@ Las reglas `comparisons` se declaran en el nivel superior del contrato. Las comp
   }
 ]
 ```
+
+## Control de diversidad
+
+Usa `min_distinct` y `max_distinct` cuando una columna debe conservar cierta variedad. Por ejemplo, un lote de ventas con una sola región o cientos de categorías nuevas puede indicar una exportación incompleta o un catálogo incorrecto:
+
+```json
+"categoria": {
+  "type": "string",
+  "min_distinct": 2,
+  "max_distinct": 12
+}
+```
+
+Estas reglas cuentan únicamente valores no vacíos. Si ambas se declaran, `min_distinct` no puede ser mayor que `max_distinct`.
 
 ## Arquitectura
 

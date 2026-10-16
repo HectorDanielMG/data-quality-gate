@@ -140,13 +140,15 @@ def _read_contract(path: Path) -> dict[str, Any]:
                 raise ValueError(f"Expresión regular inválida en '{name}': {exc}") from exc
         if "allowed_values" in rules and not isinstance(rules["allowed_values"], list):
             raise ValueError(f"'allowed_values' de '{name}' debe ser una lista JSON.")
-        for length_rule in ("min_length", "max_length"):
-            if length_rule in rules:
-                length = rules[length_rule]
-                if isinstance(length, bool) or not isinstance(length, int) or length < 0:
-                    raise ValueError(f"'{length_rule}' de '{name}' debe ser un número entero mayor o igual a cero.")
+        for count_rule in ("min_length", "max_length", "min_distinct", "max_distinct"):
+            if count_rule in rules:
+                count = rules[count_rule]
+                if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+                    raise ValueError(f"'{count_rule}' de '{name}' debe ser un número entero mayor o igual a cero.")
         if "min_length" in rules and "max_length" in rules and rules["min_length"] > rules["max_length"]:
             raise ValueError(f"'min_length' de '{name}' no puede ser mayor que 'max_length'.")
+        if "min_distinct" in rules and "max_distinct" in rules and rules["min_distinct"] > rules["max_distinct"]:
+            raise ValueError(f"'min_distinct' de '{name}' no puede ser mayor que 'max_distinct'.")
     comparisons = data.get("comparisons", [])
     if not isinstance(comparisons, list):
         raise ValueError("'comparisons' debe ser una lista de reglas.")
@@ -251,6 +253,11 @@ def analyze(csv_path: Path, contract_path: Path, delimiter: str | None = None) -
                 else: seen.add(value)
             if duplicates:
                 add("NOT_UNIQUE", "error", "Valores duplicados", f"La columna '{name}' debe ser única.", len(duplicates), name, duplicates)
+        distinct_values = {value for _, value in filled}
+        if "min_distinct" in rules and len(distinct_values) < rules["min_distinct"]:
+            add("DISTINCT_COUNT_LOW", "error", "Diversidad insuficiente", f"La columna '{name}' requiere al menos {rules['min_distinct']} valores distintos; llegaron {len(distinct_values)}.", max(1, len(filled)), name)
+        if "max_distinct" in rules and len(distinct_values) > rules["max_distinct"]:
+            add("DISTINCT_COUNT_HIGH", "error", "Demasiados valores distintos", f"La columna '{name}' permite como máximo {rules['max_distinct']} valores distintos; llegaron {len(distinct_values)}.", max(1, len(filled)), name)
         if "allowed_values" in rules:
             allowed = {str(item) for item in rules["allowed_values"]}
             invalid = [line for line, value in filled if value not in allowed]
