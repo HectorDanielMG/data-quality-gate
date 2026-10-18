@@ -192,6 +192,20 @@ def _read_contract(path: Path) -> dict[str, Any]:
         severity = str(rule.get("severity", "error")).lower()
         if severity not in {"error", "warning"}:
             raise ValueError(f"La severidad de la regla de comparación {index} debe ser 'error' o 'warning'.")
+    conditional_required = data.get("conditional_required", [])
+    if not isinstance(conditional_required, list):
+        raise ValueError("'conditional_required' debe ser una lista de reglas.")
+    for index, rule in enumerate(conditional_required, start=1):
+        if not isinstance(rule, dict):
+            raise ValueError(f"La regla condicional {index} debe ser un objeto JSON.")
+        source, target = rule.get("if_column"), rule.get("then_required")
+        if source not in data["columns"] or target not in data["columns"]:
+            raise ValueError(f"Las columnas de la regla condicional {index} deben declararse en 'columns'.")
+        if "equals" not in rule:
+            raise ValueError(f"La regla condicional {index} debe declarar el valor 'equals'.")
+        severity = str(rule.get("severity", "error")).lower()
+        if severity not in {"error", "warning"}:
+            raise ValueError(f"La severidad de la regla condicional {index} debe ser 'error' o 'warning'.")
     return data
 
 
@@ -351,6 +365,19 @@ def analyze(csv_path: Path, contract_path: Path, delimiter: str | None = None) -
         if failed_lines:
             message = str(rule.get("message", f"Se esperaba que '{left_name}' {operator} '{right_name}'."))
             add("CROSS_FIELD", str(rule.get("severity", "error")).lower(), "Regla entre columnas incumplida", message, len(failed_lines), lines=failed_lines)
+
+    for rule in contract.get("conditional_required", []):
+        source, target = rule["if_column"], rule["then_required"]
+        if source not in headers or target not in headers:
+            continue
+        expected = str(rule["equals"]).strip()
+        missing_lines = [
+            index for index, row in enumerate(rows, start=2)
+            if str(row.get(source, "")).strip() == expected and _blank(row.get(target))
+        ]
+        if missing_lines:
+            message = str(rule.get("message", f"'{target}' es obligatorio cuando '{source}' es '{expected}'."))
+            add("CONDITIONAL_REQUIRED", str(rule.get("severity", "error")).lower(), "Campo obligatorio según condición", message, len(missing_lines), target, missing_lines)
 
     minimum = int(contract.get("minimum_rows", 0))
     maximum = contract.get("maximum_rows")

@@ -90,6 +90,7 @@ Agrega `--fail-on-warning` para bloquear también ante advertencias. El JSON inc
 | `min_distinct` / `max_distinct` | `2` / `50` | Controla la cantidad de valores diferentes esperados |
 | `max_age_days` | `7` | Rechaza fechas con una antigüedad mayor al límite |
 | `comparisons` | `existencia >= stock_minimo` | Compara dos columnas por fila con `==`, `!=`, `<`, `<=`, `>` o `>=` |
+| `conditional_required` | `estado = Activo → fecha_activacion` | Requiere un campo cuando se cumple una condición |
 
 `minimum_rows` y `maximum_rows` controlan el tamaño del lote; `primary_key` documenta la llave de negocio. Las columnas extra generan advertencias y las columnas requeridas faltantes bloquean la validación. `allowed_values` debe declararse como una lista JSON. Para una columna opcional, `max_missing_percent` acepta un porcentaje de 0 a 100; `missing_severity` puede ser `error` o `warning` (por defecto, `error`).
 
@@ -134,6 +135,24 @@ En columnas `date` o `datetime`, `max_age_days` evita que el proceso acepte info
 ```
 
 Los valores vacíos se validan mediante las reglas de campos obligatorios y faltantes; las fechas inválidas se reportan como errores de tipo.
+
+## Campos obligatorios según condición
+
+Declara `conditional_required` en el nivel superior del contrato para exigir información cuando una fila entra en un estado determinado. Esto evita campos vacíos que solo son inválidos en un contexto específico:
+
+```json
+"conditional_required": [
+  {
+    "if_column": "estado",
+    "equals": "Activo",
+    "then_required": "fecha_activacion",
+    "severity": "error",
+    "message": "Todo registro activo debe indicar su fecha de activación."
+  }
+]
+```
+
+La regla compara el texto de `if_column` con `equals` y señala las filas donde `then_required` está vacío. Las columnas involucradas deben declararse en `columns`.
 
 ## Arquitectura
 
