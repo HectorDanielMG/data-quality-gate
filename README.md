@@ -11,6 +11,7 @@ Proyecto de portafolio sobre ingeniería de datos y automatización, aplicado a 
 - Umbrales de valores vacíos configurables por columna, con severidad bloqueante o informativa.
 - Reglas entre columnas para detectar inconsistencias de negocio, como existencias por debajo del mínimo.
 - Perfilado de completitud, valores distintos, muestras y rangos numéricos.
+- Distribución de valores frecuentes para columnas categóricas de baja cardinalidad.
 - Detección de filas repetidas y registros con estructura inválida.
 - Puntuación de calidad, severidad por hallazgo y códigos de salida para CI/CD.
 - Informes HTML para personas y JSON para automatizaciones.

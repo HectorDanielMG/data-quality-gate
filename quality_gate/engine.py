@@ -35,6 +35,7 @@ class ColumnProfile:
     minimum: str | None = None
     maximum: str | None = None
     average: float | None = None
+    top_values: list[dict[str, Any]] = dc_field(default_factory=list)
 
 
 @dataclass
@@ -95,7 +96,13 @@ def _profile(name: str, values: list[Any]) -> ColumnProfile:
         minimum, maximum = str(min(numeric).normalize()), str(max(numeric).normalize())
         average = round(float(sum(numeric) / len(numeric)), 4)
     missing = len(values) - len(clean)
-    return ColumnProfile(name, inferred, len(values), missing, len(counts), round(100 * (len(clean) / len(values) if values else 1), 1), list(dict.fromkeys(clean))[:4], minimum, maximum, average)
+    top_values = []
+    if 1 <= len(counts) <= 12:
+        top_values = [
+            {"value": value, "count": count, "percent": round(100 * count / len(clean), 1)}
+            for value, count in counts.most_common(3)
+        ]
+    return ColumnProfile(name, inferred, len(values), missing, len(counts), round(100 * (len(clean) / len(values) if values else 1), 1), list(dict.fromkeys(clean))[:4], minimum, maximum, average, top_values)
 
 
 def _type_ok(value: str, expected: str) -> bool:
