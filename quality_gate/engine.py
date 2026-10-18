@@ -6,7 +6,7 @@ import json
 import re
 from collections import Counter
 from dataclasses import asdict, dataclass, field as dc_field
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
@@ -83,6 +83,17 @@ def _infer(value: str) -> str:
         return "texto"
 
 
+def _date_value(value: str) -> date | None:
+    text = value.strip()
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00")).date()
+    except ValueError:
+        try:
+            return date.fromisoformat(text)
+        except ValueError:
+            return None
+
+
 def _profile(name: str, values: list[Any]) -> ColumnProfile:
     clean = [str(value).strip() for value in values if not _blank(value)]
     kinds = {_infer(value) for value in clean}
@@ -156,6 +167,16 @@ def _read_contract(path: Path) -> dict[str, Any]:
             raise ValueError(f"'min_length' de '{name}' no puede ser mayor que 'max_length'.")
         if "min_distinct" in rules and "max_distinct" in rules and rules["min_distinct"] > rules["max_distinct"]:
             raise ValueError(f"'min_distinct' de '{name}' no puede ser mayor que 'max_distinct'.")
+        if "max_age_days" in rules:
+            max_age = rules["max_age_days"]
+            if isinstance(max_age, bool) or not isinstance(max_age, int) or max_age < 0:
+                raise ValueError(f"'max_age_days' de '{name}' debe ser un número entero mayor o igual a cero.")
+            expected_type = str(rules.get("type", "")).lower()
+            if expected_type not in {"date", "fecha", "datetime", "fecha-hora"}:
+                raise ValueError(f"'max_age_days' de '{name}' requiere un tipo date o datetime.")
+            severity = str(rules.get("freshness_severity", "error")).lower()
+            if severity not in {"error", "warning"}:
+                raise ValueError(f"'freshness_severity' de '{name}' debe ser 'error' o 'warning'.")
     comparisons = data.get("comparisons", [])
     if not isinstance(comparisons, list):
         raise ValueError("'comparisons' debe ser una lista de reglas.")
@@ -253,6 +274,12 @@ def analyze(csv_path: Path, contract_path: Path, delimiter: str | None = None) -
             invalid = [line for line, value in filled if not _type_ok(value, str(expected_type))]
             if invalid:
                 add("TYPE_MISMATCH", "error", "Tipo de dato incorrecto", f"La columna '{name}' debe ser de tipo {expected_type}.", len(invalid), name, invalid)
+        if "max_age_days" in rules:
+            oldest_allowed = datetime.now(timezone.utc).date() - timedelta(days=rules["max_age_days"])
+            stale = [line for line, value in filled if (parsed := _date_value(value)) is not None and parsed < oldest_allowed]
+            if stale:
+                severity = str(rules.get("freshness_severity", "error")).lower()
+                add("STALE_VALUE", severity, "Datos desactualizados", f"La columna '{name}' contiene fechas anteriores a {oldest_allowed.isoformat()} (máximo {rules['max_age_days']} día(s) de antigüedad).", len(stale), name, stale)
         if rules.get("unique"):
             seen: set[str] = set(); duplicates: list[int] = []
             for line, value in filled:

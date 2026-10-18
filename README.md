@@ -88,6 +88,7 @@ Agrega `--fail-on-warning` para bloquear también ante advertencias. El JSON inc
 | `missing_severity` | `"warning"` | Define si exceder el umbral bloquea o solo advierte |
 | `min_length` / `max_length` | `3` / `80` | Define un rango de longitud para texto |
 | `min_distinct` / `max_distinct` | `2` / `50` | Controla la cantidad de valores diferentes esperados |
+| `max_age_days` | `7` | Rechaza fechas con una antigüedad mayor al límite |
 | `comparisons` | `existencia >= stock_minimo` | Compara dos columnas por fila con `==`, `!=`, `<`, `<=`, `>` o `>=` |
 
 `minimum_rows` y `maximum_rows` controlan el tamaño del lote; `primary_key` documenta la llave de negocio. Las columnas extra generan advertencias y las columnas requeridas faltantes bloquean la validación. `allowed_values` debe declararse como una lista JSON. Para una columna opcional, `max_missing_percent` acepta un porcentaje de 0 a 100; `missing_severity` puede ser `error` o `warning` (por defecto, `error`).
@@ -119,6 +120,20 @@ Usa `min_distinct` y `max_distinct` cuando una columna debe conservar cierta var
 ```
 
 Estas reglas cuentan únicamente valores no vacíos. Si ambas se declaran, `min_distinct` no puede ser mayor que `max_distinct`.
+
+## Actualidad de fechas
+
+En columnas `date` o `datetime`, `max_age_days` evita que el proceso acepte información demasiado antigua. Puedes convertirlo en aviso con `freshness_severity`:
+
+```json
+"actualizado": {
+  "type": "date",
+  "max_age_days": 7,
+  "freshness_severity": "warning"
+}
+```
+
+Los valores vacíos se validan mediante las reglas de campos obligatorios y faltantes; las fechas inválidas se reportan como errores de tipo.
 
 ## Arquitectura
 
